@@ -1,9 +1,13 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards, Request } from "@nestjs/common";
 import { AppService } from './app.service';
+import { LocalAuthGuard } from "./auth/local-auth.guard";
+import { AuthService } from './auth/auth.service';
+import { JwtAuthGuard } from "./auth/jwt-auth.guard";
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService,
+              private authService: AuthService) {}
 
   @Get()
   getHello(): string {
@@ -18,5 +22,17 @@ export class AppController {
   @Post()
   async setKey(@Body('key') key: string, @Body('value') value: string): Promise<any> {
     return await this.appService.setKey(key, value);
+  }
+
+  @UseGuards(LocalAuthGuard)
+  @Post('auth/login')
+  async login(@Request() req) {
+    return this.authService.login(req.user);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Request() req) {
+    return req.user;
   }
 }
